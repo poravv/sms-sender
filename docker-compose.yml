@@ -1,0 +1,11 @@
+version: "3"
+services:
+  app:
+    image: sms-sender:${IMAGE_TAG}  # Usar la imagen con la etiqueta de versión
+    ports:
+      - "${PORT}:3000"
+    environment:
+      RAILWAY_STATIC_URL: "${RAILWAY_STATIC_URL}"
+      PUBLIC_URL: "${PUBLIC_URL}"
+      PORT: 3000
+    container_name: sms-sender

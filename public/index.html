@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMS Sender</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center">Enviar SMS</h1>
+        <p id="modemStatusMessage" class="text-center text-info"></p>
+        
+        <form action="/send-sms" method="POST" enctype="multipart/form-data" class="mt-4">
+            <div class="form-group">
+                <label for="message">Mensaje</label>
+                <textarea id="message" name="message" rows="4" class="form-control" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="csvFile">Cargar CSV con números de teléfono</label>
+                <input type="file" id="csvFile" name="csvFile" accept=".csv" class="form-control-file" required>
+                <small class="form-text text-muted">El CSV debe contener una columna 'phone' con los números de teléfono.</small>
+            </div>
+            <div class="text-center">
+                <button type="submit" class="btn btn-primary">Enviar SMS</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Realizar una solicitud AJAX para obtener el estado del módem
+        document.addEventListener("DOMContentLoaded", () => {
+            fetch('/modem-status')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('modemStatusMessage').innerText = data.message;
+                })
+                .catch(error => {
+                    document.getElementById('modemStatusMessage').innerText = 'Error al obtener el estado del módem.';
+                });
+        });
+    </script>
+</body>
+</html>
