@@ -16,24 +16,25 @@ app.use(express.urlencoded({ extended: true }));
 let port;
 let modemDetected = false;
 
-// Función para detectar el módem
+// Función para detectar y abrir el módem automáticamente
 const detectModem = async () => {
     try {
-        const ports = await SerialPort.list();
-        console.log('Puertos seriales disponibles:', ports); // Imprimir todos los puertos detectados
-        
-        // Filtrar puertos que contengan 'COM' en su nombre (en Windows) o '/dev/tty' (en Linux/Mac)
+        const ports = await SerialPort.list(); // Lista todos los puertos seriales disponibles
+
+        // Filtra los puertos con manufacturer 'Huawei' y que incluyan 'COM' en su path
         const modemPorts = ports.filter(port => 
-            port.path.includes('COM') || port.path.includes('/dev/tty')
+            port.manufacturer && port.manufacturer.includes('Huawei') &&
+            port.path.includes('COM')
         );
 
         if (modemPorts.length === 0) {
-            console.error('No se detectó ningún módem.');
+            console.error('No se detectó ningún módem Huawei.');
             return;
         }
 
+        // Recorre los puertos encontrados y trata de abrir el primero que funcione
         for (const portInfo of modemPorts) {
-            console.log(`Probing port: ${portInfo.path}`);
+            console.log(`Intentando abrir el puerto: ${portInfo.path}`);
 
             try {
                 port = new SerialPort({ path: portInfo.path, baudRate: 9600, autoOpen: false });
@@ -41,7 +42,7 @@ const detectModem = async () => {
                 port.open((err) => {
                     if (!err) {
                         modemDetected = true;
-                        console.log(`Módem detectado en el puerto: ${portInfo.path}`);
+                        console.log(`Módem Huawei detectado en el puerto: ${portInfo.path}`);
 
                         const parser = port.pipe(new ReadlineParser({ delimiter: '\r\n' }));
 
