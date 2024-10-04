@@ -14,21 +14,21 @@ app.use(express.static('public'));
 let port;
 let modemDetected = false;
 
-// Función para detectar el módem
+// Función para detectar el módem automáticamente
 const detectModem = async () => {
     try {
         const ports = await SerialPort.list();
         const modemPorts = ports.filter(port => 
-            port.path === 'COM25' // Aseguramos que estamos usando COM25
+            port.manufacturer && port.manufacturer.includes('Huawei') // Aquí puedes filtrar por nombre o vendorId/productId
         );
 
         if (modemPorts.length === 0) {
-            console.error('No se detectó ningún módem en COM25.');
+            console.error('No se detectó ningún módem Huawei.');
             return;
         }
 
         for (const portInfo of modemPorts) {
-            console.log(`Probing port: ${portInfo.path}`);
+            console.log(`Intentando conectar al puerto: ${portInfo.path}`);
 
             try {
                 port = new SerialPort({ path: portInfo.path, baudRate: 9600, autoOpen: false });
@@ -36,7 +36,7 @@ const detectModem = async () => {
                 port.open((err) => {
                     if (!err) {
                         modemDetected = true;
-                        console.log(`Módem detectado en el puerto: ${portInfo.path}`);
+                        console.log(`Módem detectado y conectado en el puerto: ${portInfo.path}`);
 
                         const parser = port.pipe(new ReadlineParser({ delimiter: '\r\n' }));
 
