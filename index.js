@@ -19,15 +19,11 @@ const detectModem = async () => {
     try {
         const ports = await SerialPort.list();
         const modemPorts = ports.filter(port => 
-            port.path.startsWith('COM') || 
-            port.path.startsWith('/dev/ttyUSB') || 
-            port.path.startsWith('/dev/ttyACM') ||
-            port.path.startsWith('/dev/cu.usbmodem') ||
-            port.path.startsWith('/dev/tty.usbmodem')
+            port.path === 'COM25' // Aseguramos que estamos usando COM25
         );
 
         if (modemPorts.length === 0) {
-            console.error('No se detectó ningún módem.');
+            console.error('No se detectó ningún módem en COM25.');
             return;
         }
 
@@ -187,4 +183,3 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Servidor escuchando en el puerto ${PORT}`);
 });
-
