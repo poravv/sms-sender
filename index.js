@@ -19,11 +19,12 @@ const detectModem = async () => {
     try {
         const ports = await SerialPort.list();
         const modemPorts = ports.filter(port => 
-            port.path === 'COM25' // Aseguramos que estamos usando COM25
+            port.manufacturer && port.manufacturer.includes('HUAWEI') && port.friendlyName.includes('PC')
+            //|| port.productId === '1234' // Ajusta el ID según tu módem
         );
 
         if (modemPorts.length === 0) {
-            console.error('No se detectó ningún módem en COM25.');
+            console.error('No se detectó ningún módem Huawei.');
             return;
         }
 
@@ -36,7 +37,7 @@ const detectModem = async () => {
                 port.open((err) => {
                     if (!err) {
                         modemDetected = true;
-                        console.log(`Módem detectado en el puerto: ${portInfo.path}`);
+                        console.log(`Módem Huawei detectado en el puerto: ${portInfo.path}`);
 
                         const parser = port.pipe(new ReadlineParser({ delimiter: '\r\n' }));
 
