@@ -16,17 +16,19 @@ app.use(express.urlencoded({ extended: true }));
 let port;
 let modemDetected = false;
 
-// Función para detectar el módem Huawei Mobile Connect
+// Función para detectar el módem
 const detectModem = async () => {
     try {
         const ports = await SerialPort.list();
+        console.log('Puertos seriales disponibles:', ports); // Imprimir todos los puertos detectados
+        
+        // Filtrar puertos que contengan 'COM' en su nombre (en Windows) o '/dev/tty' (en Linux/Mac)
         const modemPorts = ports.filter(port => 
-            port.manufacturer && port.manufacturer.includes('Huawei') &&
-            port.path.includes('COM')
+            port.path.includes('COM') || port.path.includes('/dev/tty')
         );
 
         if (modemPorts.length === 0) {
-            console.error('No se detectó ningún módem Huawei.');
+            console.error('No se detectó ningún módem.');
             return;
         }
 
@@ -39,7 +41,7 @@ const detectModem = async () => {
                 port.open((err) => {
                     if (!err) {
                         modemDetected = true;
-                        console.log(`Módem Huawei detectado en el puerto: ${portInfo.path}`);
+                        console.log(`Módem detectado en el puerto: ${portInfo.path}`);
 
                         const parser = port.pipe(new ReadlineParser({ delimiter: '\r\n' }));
 
