@@ -13,6 +13,7 @@ app.use(express.static('public'));
 
 let port;
 let modemDetected = false;
+let modemPath = null;
 
 // Función para detectar el módem
 const detectModem = async () => {
@@ -20,24 +21,36 @@ const detectModem = async () => {
         const ports = await SerialPort.list();
         const modemPorts = ports.filter(port => 
             port.manufacturer && port.manufacturer.includes('HUAWEI') && port.friendlyName.includes('PC')
-            //|| port.productId === '1234' // Ajusta el ID según tu módem
         );
 
         if (modemPorts.length === 0) {
-            console.error('No se detectó ningún módem Huawei.');
+            if (modemDetected) {
+                console.log('El módem fue desconectado.');
+                modemDetected = false;
+                if (port && port.isOpen) {
+                    port.close(err => {
+                        if (err) {
+                            console.error('Error al cerrar el puerto:', err.message);
+                        } else {
+                            console.log('Puerto cerrado correctamente.');
+                        }
+                    });
+                }
+            }
             return;
         }
 
-        for (const portInfo of modemPorts) {
-            console.log(`Probing port: ${portInfo.path}`);
+        if (!modemDetected || modemPath !== modemPorts[0].path) {
+            modemPath = modemPorts[0].path;
+            console.log(`Módem Huawei detectado en el puerto: ${modemPath}`);
 
             try {
-                port = new SerialPort({ path: portInfo.path, baudRate: 9600, autoOpen: false });
-                
+                port = new SerialPort({ path: modemPath, baudRate: 9600, autoOpen: false });
+
                 port.open((err) => {
                     if (!err) {
                         modemDetected = true;
-                        console.log(`Módem Huawei detectado en el puerto: ${portInfo.path}`);
+                        console.log(`Módem conectado y abierto en el puerto: ${modemPath}`);
 
                         const parser = port.pipe(new ReadlineParser({ delimiter: '\r\n' }));
 
@@ -47,16 +60,14 @@ const detectModem = async () => {
                         });
 
                         parser.on('data', (data) => {
-                            console.log('Data from modem: ', data);
+                            console.log('Datos recibidos del módem: ', data);
                         });
                     } else {
-                        console.error(`No se pudo abrir el puerto: ${portInfo.path}, error: ${err.message}`);
+                        console.error(`No se pudo abrir el puerto: ${modemPath}, error: ${err.message}`);
                     }
                 });
-
-                if (modemDetected) break;
             } catch (err) {
-                console.error(`Error al intentar abrir el puerto: ${portInfo.path}, error: ${err.message}`);
+                console.error(`Error al intentar abrir el puerto: ${modemPath}, error: ${err.message}`);
             }
         }
     } catch (err) {
@@ -68,7 +79,7 @@ const detectModem = async () => {
 const sendSMS = (phoneNumber, message) => {
     return new Promise((resolve, reject) => {
         console.log(`Iniciando envío de SMS al número ${phoneNumber}...`);
-        
+
         if (!port || !modemDetected) {
             console.error('Error: No se ha detectado un módem activo.');
             return reject(new Error('No modem detected'));
@@ -82,45 +93,23 @@ const sendSMS = (phoneNumber, message) => {
             console.log('Módem configurado en modo SMS.');
 
             setTimeout(() => {
-                console.log('Chequeando señal con AT+CSQ...');
-                port.write('AT+CSQ\r', (err) => {
+                port.write(`AT+CMGS="${phoneNumber}"\r`, (err) => {
                     if (err) {
-                        console.error('Error al verificar señal:', err.message);
+                        console.error(`Error al enviar comando CMGS: ${err.message}`);
                         return reject(err);
                     }
 
                     setTimeout(() => {
-                        console.log('Verificando estado de registro con AT+CREG?...');
-                        port.write('AT+CREG?\r', (err) => {
+                        port.write(`${message}\x1A`, (err) => {
                             if (err) {
-                                console.error('Error al verificar estado de registro:', err.message);
+                                console.error(`Error al enviar el mensaje: ${err.message}`);
                                 return reject(err);
                             }
 
-                            setTimeout(() => {
-                                console.log(`Preparando para enviar SMS a ${phoneNumber}...`);
-                                port.write(`AT+CMGS="${phoneNumber}"\r`, (err) => {
-                                    if (err) {
-                                        console.error(`Error al enviar comando CMGS: ${err.message}`);
-                                        return reject(err);
-                                    }
-
-                                    setTimeout(() => {
-                                        console.log(`Enviando mensaje: "${message}" a ${phoneNumber}`);
-                                        port.write(`${message}\x1A`, (err) => {
-                                            if (err) {
-                                                console.error(`Error al enviar el mensaje: ${err.message}`);
-                                                return reject(err);
-                                            }
-
-                                            console.log(`SMS enviado correctamente a ${phoneNumber}`);
-                                            resolve();
-                                        });
-                                    }, 1000);
-                                });
-                            }, 500);
+                            console.log(`SMS enviado correctamente a ${phoneNumber}`);
+                            resolve();
                         });
-                    }, 500);
+                    }, 1000);
                 });
             }, 500);
         });
@@ -145,7 +134,6 @@ app.get('/', (req, res) => {
 app.post('/send-sms', upload.single('csvFile'), (req, res) => {
     console.log('Solicitud recibida para enviar SMS');
     if (!modemDetected) {
-        console.log('No se detectó el módem, no se puede enviar SMS.');
         return res.status(500).json({ message: 'No se puede enviar SMS porque no se detectó el módem.' });
     }
 
@@ -165,7 +153,6 @@ app.post('/send-sms', upload.single('csvFile'), (req, res) => {
             }
         })
         .on('end', async () => {
-            console.log('Todos los números de teléfono han sido leídos del archivo CSV.');
             for (const phoneNumber of phoneNumbers) {
                 try {
                     await sendSMS(phoneNumber, message);
@@ -177,8 +164,8 @@ app.post('/send-sms', upload.single('csvFile'), (req, res) => {
         });
 });
 
-// Detectar el módem al iniciar la aplicación
-detectModem();
+// Detectar el módem en intervalos regulares
+setInterval(detectModem, 5000);  // Verifica cada 5 segundos
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

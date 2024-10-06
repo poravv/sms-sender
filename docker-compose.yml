@@ -9,3 +9,4 @@ services:
       PUBLIC_URL: "${PUBLIC_URL}"
       PORT: 3000
     container_name: sms-sender
+    restart: unless-stopped  # Reiniciar en caso de fallo y al iniciar Docker

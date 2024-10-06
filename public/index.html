@@ -5,13 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SMS Sender</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        #successMessage {
+            display: none;
+        }
+    </style>
 </head>
 <body>
     <div class="container mt-5">
         <h1 class="text-center">Enviar SMS</h1>
         <p id="modemStatusMessage" class="text-center text-info"></p>
         
-        <form action="/send-sms" method="POST" enctype="multipart/form-data" class="mt-4">
+        <!-- Formulario de envío de SMS -->
+        <form id="smsForm" action="/send-sms" method="POST" enctype="multipart/form-data" class="mt-4">
             <div class="form-group">
                 <label for="message">Mensaje</label>
                 <textarea id="message" name="message" rows="4" class="form-control" required></textarea>
@@ -25,19 +31,71 @@
                 <button type="submit" class="btn btn-primary">Enviar SMS</button>
             </div>
         </form>
+
+        <!-- Mensaje de éxito y botón para volver -->
+        <div id="successMessage" class="text-center mt-4">
+            <p class="text-success">SMS enviados correctamente.</p>
+            <button id="backButton" class="btn btn-secondary">Volver a enviar otro mensaje</button>
+        </div>
     </div>
 
     <script>
-        // Realizar una solicitud AJAX para obtener el estado del módem
-        document.addEventListener("DOMContentLoaded", () => {
+        // Función para verificar el estado del módem
+        function checkModemStatus() {
             fetch('/modem-status')
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById('modemStatusMessage').innerText = data.message;
+                    if (data.message.includes('No se detectó')) {
+                        document.getElementById('modemStatusMessage').classList.remove('text-info');
+                        document.getElementById('modemStatusMessage').classList.add('text-danger');
+                    } else {
+                        document.getElementById('modemStatusMessage').classList.remove('text-danger');
+                        document.getElementById('modemStatusMessage').classList.add('text-info');
+                    }
                 })
                 .catch(error => {
                     document.getElementById('modemStatusMessage').innerText = 'Error al obtener el estado del módem.';
+                    document.getElementById('modemStatusMessage').classList.add('text-danger');
                 });
+        }
+
+        // Inicializar la detección del módem al cargar la página
+        document.addEventListener("DOMContentLoaded", () => {
+            checkModemStatus();
+            // Verificar el estado del módem cada 5 segundos
+            setInterval(checkModemStatus, 5000);
+        });
+
+        // Escuchar el evento de envío de formulario
+        document.getElementById('smsForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            // Mostrar mensaje de éxito después de enviar el formulario
+            const formData = new FormData(this);
+
+            fetch('/send-sms', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Ocultar el formulario y mostrar mensaje de éxito
+                    document.getElementById('smsForm').style.display = 'none';
+                    document.getElementById('successMessage').style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Error al enviar el formulario:', error);
+            });
+        });
+
+        // Escuchar el evento de clic del botón "Volver a enviar otro mensaje"
+        document.getElementById('backButton').addEventListener('click', function() {
+            // Reiniciar el formulario y mostrarlo nuevamente
+            document.getElementById('smsForm').reset();
+            document.getElementById('smsForm').style.display = 'block';
+            document.getElementById('successMessage').style.display = 'none';
         });
     </script>
 </body>
