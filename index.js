@@ -137,8 +137,8 @@ app.post('/send-sms', upload.single('csvFile'), (req, res) => {
         return res.status(500).json({ message: 'No se puede enviar SMS porque no se detectó el módem.' });
     }
 
-    const message = req.body.message;
-    const csvFilePath = req.file.path;
+    const message = req.body.message; // Mensaje desde el formulario
+    const csvFilePath = req.file.path; // Ruta del archivo CSV
     const includeMessageInCSV = req.body.includeMessageInCSV === 'on'; // Obtener el valor del checkbox
 
     console.log(`Procesando archivo CSV: ${csvFilePath}`);
@@ -149,18 +149,16 @@ app.post('/send-sms', upload.single('csvFile'), (req, res) => {
         .pipe(csv())
         .on('data', (row) => {
             if (row.phone) {
-                phoneNumbers.push(row.phone);
-                console.log(`Número detectado: ${row.phone}`);
+                const phoneNumber = row.phone.trim(); // Limpiar el número
+                phoneNumbers.push(phoneNumber);
+                console.log(`Número detectado: ${phoneNumber}`);
 
-                // Si se incluye el mensaje en el CSV, lo agregamos a la fila
+                // Enviar SMS con el mensaje del CSV si se incluye
                 if (includeMessageInCSV) {
-                    if (row.message) {
-                        console.log(`Mensaje desde CSV para ${row.phone}: ${row.message}`);
-                        sendSMS(row.phone, row.message)
-                            .catch(err => console.error(`Error al enviar SMS a ${row.phone}:`, err.message));
-                    } else {
-                        console.log(`No se encontró un mensaje para ${row.phone} en el CSV.`);
-                    }
+                    const messageFromCSV = row.message ? row.message.trim() : message; // Usar el mensaje del CSV o el del formulario si no hay mensaje en el CSV
+                    console.log(`Enviando mensaje a ${phoneNumber}: ${messageFromCSV}`);
+                    sendSMS(phoneNumber, messageFromCSV)
+                        .catch(err => console.error(`Error al enviar SMS a ${phoneNumber}:`, err.message));
                 }
             }
         })
@@ -178,6 +176,7 @@ app.post('/send-sms', upload.single('csvFile'), (req, res) => {
             res.send('SMS enviados.');
         });
 });
+
 
 
 
