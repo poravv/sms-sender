@@ -1,3 +1,9 @@
+# Levantar App
+
+```
+docker-compose up -d
+```
+
 # Paso a Paso para Configurar un Host en Windows y Redirigir a localhost:3000
 
 ## 1. Abrir el archivo `hosts`
@@ -40,3 +46,4 @@ Abre un navegador y escribe:
 ```
 http://sms.sender.net:3000
 ```
+
