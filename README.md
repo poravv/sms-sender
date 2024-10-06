@@ -1,38 +1,42 @@
-# Pasos a Seguir
-## Instala una Aplicación SMS Gateway:
+# Paso a Paso para Configurar un Host en Windows y Redirigir a localhost:3000
 
-Busca e instala una aplicación que funcione como SMS Gateway en tu dispositivo Android. Algunas opciones populares son:
-SMS Gateway API
-SMS Gateway
-Estas aplicaciones generalmente te permiten recibir solicitudes HTTP y enviarlas como SMS.
-Configura la Aplicación:
+## 1. Abrir el archivo `hosts`
 
-Abre la aplicación y configura los ajustes, como el puerto en el que estará escuchando las solicitudes, la autenticación (si es necesario), y asegúrate de que tenga los permisos necesarios para enviar SMS.
-Toma nota de la dirección IP y el puerto que utilizarás para enviar SMS desde tu aplicación Node.js.
+### Ubicación del archivo `hosts`:
+El archivo `hosts` en Windows se encuentra en la siguiente ruta:
 
+### Cómo editar el archivo:
 
+1. Abre el **Bloc de notas** como administrador:
+   - Haz clic en el botón de **Inicio** y escribe `Bloc de notas`.
+   - Haz clic derecho en el resultado y selecciona **Ejecutar como administrador**.
+   
+2. Dentro del Bloc de notas, ve a **Archivo** > **Abrir**.
 
-# Pasos para Usar tu Android como Módem
-## Habilitar la Depuración USB:
+3. Navega a la ruta:
 
-Ve a Ajustes > Acerca del teléfono.
-Toca varias veces en Número de compilación hasta que veas un mensaje que dice que las opciones de desarrollador están habilitadas.
-Regresa a Ajustes, y busca Opciones de desarrollador.
-Activa Depuración USB.
-Conectar el Teléfono a la Computadora:
+4. En el campo de tipo de archivo, selecciona **Todos los archivos** para poder ver el archivo `hosts`.
 
-Conecta tu teléfono a tu computadora mediante un cable USB.
-Usar Aplicaciones para Enviar SMS:
+5. Selecciona el archivo `hosts` y haz clic en **Abrir**.
 
-Puedes usar aplicaciones que permitan el envío de SMS desde tu computadora a través de tu teléfono. Algunas de estas aplicaciones permiten recibir comandos a través de un puerto serial, similar a un módem.
-Ejemplos de aplicaciones son:
-"SMS Gateway": Permite que tu aplicación Node.js envíe mensajes a través de la interfaz de la aplicación.
-"KDE Connect" o "Pushbullet": Permiten interacciones con el teléfono, aunque su uso puede variar.
+---
 
+## 2. Editar el archivo `hosts`
+
+1. Una vez abierto el archivo `hosts`, agrega la siguiente línea al final del archivo:
 ```
-brew install --cask android-platform-tools
+127.0.0.1   sms.sender.net
 ```
 
+3. Guardar el archivo
+Guarda el archivo (asegúrate de estar en el modo de administrador, o no podrás guardarlo).
+4. Configurar el puerto 3000
+Si tu aplicación está corriendo en el puerto 3000 de localhost, no necesitas hacer ningún cambio adicional en la configuración del puerto.
+
+Sin embargo, si tu aplicación no está corriendo, asegúrate de que la aplicación esté ejecutándose en el puerto 3000.
+
+5. Probar la configuración
+Abre un navegador y escribe:
 ```
-adb devices
+http://sms.sender.net:3000
 ```
