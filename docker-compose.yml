@@ -1,4 +1,4 @@
-version: "3"
+version: "3.8"
 services:
   app:
     image: sms-sender:${IMAGE_TAG}  # Usar la imagen con la etiqueta de versión
