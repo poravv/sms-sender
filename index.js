@@ -153,17 +153,23 @@ app.post('/send-sms', upload.single('csvFile'), (req, res) => {
                 phoneNumbers.push(phoneNumber);
                 console.log(`Número detectado: ${phoneNumber}`);
 
-                // Enviar SMS con el mensaje del CSV si se incluye
+                // Si se incluye el mensaje en el CSV, se envía el mensaje correspondiente
                 if (includeMessageInCSV) {
-                    const messageFromCSV = row.message ? row.message.trim() : message; // Usar el mensaje del CSV o el del formulario si no hay mensaje en el CSV
-                    console.log(`Enviando mensaje a ${phoneNumber}: ${messageFromCSV}`);
-                    sendSMS(phoneNumber, messageFromCSV)
-                        .catch(err => console.error(`Error al enviar SMS a ${phoneNumber}:`, err.message));
+                    const messageFromCSV = row.message ? row.message.trim() : null; // Usar el mensaje del CSV o null si no existe
+                    console.log(`Mensaje desde CSV para ${phoneNumber}: ${messageFromCSV}`); // Agregar depuración
+
+                    if (messageFromCSV) {
+                        console.log(`Enviando mensaje desde CSV a ${phoneNumber}: ${messageFromCSV}`);
+                        sendSMS(phoneNumber, messageFromCSV)
+                            .catch(err => console.error(`Error al enviar SMS a ${phoneNumber}:`, err.message));
+                    } else {
+                        console.log(`No se encontró un mensaje en el CSV para ${phoneNumber}.`);
+                    }
                 }
             }
         })
         .on('end', async () => {
-            // Enviar SMS con el mensaje del formulario para aquellos que no tenían mensaje en el CSV
+            // Si no se incluye el mensaje en el CSV, enviar el mensaje del formulario
             if (!includeMessageInCSV) {
                 for (const phoneNumber of phoneNumbers) {
                     try {
@@ -176,8 +182,6 @@ app.post('/send-sms', upload.single('csvFile'), (req, res) => {
             res.send('SMS enviados.');
         });
 });
-
-
 
 
 // Detectar el módem en intervalos regulares
