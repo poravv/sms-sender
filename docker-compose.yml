@@ -1,7 +1,7 @@
 
 services:
   app:
-    image: sms-sender:${IMAGE_TAG}  # Usar la imagen con la etiqueta de versión
+    image: sms-sender:latest  # Usar la imagen con la etiqueta de versión
     ports:
       - "${PORT:-3000}:3000"
     environment:
