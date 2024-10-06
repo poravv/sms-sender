@@ -139,6 +139,7 @@ app.post('/send-sms', upload.single('csvFile'), (req, res) => {
 
     const message = req.body.message;
     const csvFilePath = req.file.path;
+    const includeMessageInCSV = req.body.includeMessageInCSV === 'on'; // Obtener el valor del checkbox
 
     console.log(`Procesando archivo CSV: ${csvFilePath}`);
 
@@ -150,19 +151,35 @@ app.post('/send-sms', upload.single('csvFile'), (req, res) => {
             if (row.phone) {
                 phoneNumbers.push(row.phone);
                 console.log(`Número detectado: ${row.phone}`);
+
+                // Si se incluye el mensaje en el CSV, lo agregamos a la fila
+                if (includeMessageInCSV) {
+                    if (row.message) {
+                        console.log(`Mensaje desde CSV para ${row.phone}: ${row.message}`);
+                        sendSMS(row.phone, row.message)
+                            .catch(err => console.error(`Error al enviar SMS a ${row.phone}:`, err.message));
+                    } else {
+                        console.log(`No se encontró un mensaje para ${row.phone} en el CSV.`);
+                    }
+                }
             }
         })
         .on('end', async () => {
-            for (const phoneNumber of phoneNumbers) {
-                try {
-                    await sendSMS(phoneNumber, message);
-                } catch (err) {
-                    console.error(`Error al enviar SMS a ${phoneNumber}:`, err.message);
+            // Enviar SMS con el mensaje del formulario para aquellos que no tenían mensaje en el CSV
+            if (!includeMessageInCSV) {
+                for (const phoneNumber of phoneNumbers) {
+                    try {
+                        await sendSMS(phoneNumber, message);
+                    } catch (err) {
+                        console.error(`Error al enviar SMS a ${phoneNumber}:`, err.message);
+                    }
                 }
             }
             res.send('SMS enviados.');
         });
 });
+
+
 
 // Detectar el módem en intervalos regulares
 setInterval(detectModem, 5000);  // Verifica cada 5 segundos

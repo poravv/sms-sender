@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,26 +12,33 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container mt-5">
         <h1 class="text-center">Enviar SMS</h1>
         <p id="modemStatusMessage" class="text-center text-info"></p>
-        
+
         <!-- Formulario de envío de SMS -->
         <form id="smsForm" action="/send-sms" method="POST" enctype="multipart/form-data" class="mt-4">
             <div class="form-group">
+                <input type="checkbox" id="includeMessageInCSV" class="form-check-input">
+                <label for="includeMessageInCSV" class="form-check-label">Incluir mensaje en el archivo CSV</label>
+            </div>
+            <div class="form-group" id="messageContainer">
                 <label for="message">Mensaje</label>
                 <textarea id="message" name="message" rows="4" class="form-control" required></textarea>
             </div>
             <div class="form-group">
                 <label for="csvFile">Cargar CSV con números de teléfono</label>
                 <input type="file" id="csvFile" name="csvFile" accept=".csv" class="form-control-file" required>
-                <small class="form-text text-muted">El CSV debe contener una columna 'phone' con los números de teléfono.</small>
+                <small class="form-text text-muted">El CSV debe contener una columna 'phone' con los números de
+                    teléfono.</small>
             </div>
             <div class="text-center">
                 <button type="submit" class="btn btn-primary">Enviar SMS</button>
             </div>
         </form>
+
 
         <!-- Mensaje de éxito y botón para volver -->
         <div id="successMessage" class="text-center mt-4">
@@ -68,35 +76,57 @@
         });
 
         // Escuchar el evento de envío de formulario
-        document.getElementById('smsForm').addEventListener('submit', function(event) {
+        document.getElementById('smsForm').addEventListener('submit', function (event) {
             event.preventDefault();
 
             // Mostrar mensaje de éxito después de enviar el formulario
             const formData = new FormData(this);
+            const includeMessage = document.getElementById('includeMessageInCSV').checked;
+
+            if (includeMessage) {
+                // Si el usuario ha marcado la opción, eliminamos el mensaje del FormData
+                formData.delete('message');
+            }
 
             fetch('/send-sms', {
                 method: 'POST',
                 body: formData
             })
-            .then(response => {
-                if (response.ok) {
-                    // Ocultar el formulario y mostrar mensaje de éxito
-                    document.getElementById('smsForm').style.display = 'none';
-                    document.getElementById('successMessage').style.display = 'block';
-                }
-            })
-            .catch(error => {
-                console.error('Error al enviar el formulario:', error);
-            });
+                .then(response => {
+                    if (response.ok) {
+                        // Ocultar el formulario y mostrar mensaje de éxito
+                        document.getElementById('smsForm').style.display = 'none';
+                        document.getElementById('successMessage').style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al enviar el formulario:', error);
+                });
         });
 
         // Escuchar el evento de clic del botón "Volver a enviar otro mensaje"
-        document.getElementById('backButton').addEventListener('click', function() {
+        document.getElementById('backButton').addEventListener('click', function () {
             // Reiniciar el formulario y mostrarlo nuevamente
             document.getElementById('smsForm').reset();
             document.getElementById('smsForm').style.display = 'block';
             document.getElementById('successMessage').style.display = 'none';
         });
     </script>
+    <script>
+        // Función para manejar el estado del checkbox
+        document.getElementById('includeMessageInCSV').addEventListener('change', function () {
+            const messageContainer = document.getElementById('messageContainer');
+            const messageInput = document.getElementById('message');
+
+            if (this.checked) {
+                messageContainer.style.display = 'none'; // Ocultar el contenedor del mensaje
+                messageInput.required = false; // No requerir el campo de mensaje
+            } else {
+                messageContainer.style.display = 'block'; // Mostrar el contenedor del mensaje
+                messageInput.required = true; // Requerir el campo de mensaje nuevamente
+            }
+        });
+    </script>
 </body>
+
 </html>
