@@ -4,6 +4,26 @@
 docker-compose up -d
 ```
 
+## Levantar manualmente
+
+```
+docker-compose build
+```
+
+```
+docker run -it --device COM25:/dev/ttyS0 --name sms-sender your_image_name /bin/bash
+```
+
+```
+ls -l /dev/ttyS1
+```
+## Probar la comunicaciond puertos
+```
+apt-get update && apt-get install -y minicom
+minicom -D /dev/ttyS0
+```
+
+
 # Paso a Paso para Configurar un Host en Windows y Redirigir a localhost:3000
 
 ## 1. Abrir el archivo `hosts`
