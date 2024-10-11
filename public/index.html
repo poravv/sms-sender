@@ -26,7 +26,8 @@
             </div>
             <div class="form-group" id="messageContainer">
                 <label for="message">Mensaje</label>
-                <textarea id="message" name="message" rows="4" class="form-control" required></textarea>
+                <textarea id="message" name="message" rows="4" class="form-control" maxlength="160" required></textarea>
+                <small id="charCount" class="form-text text-muted">160 caracteres restantes</small>
             </div>
             <div class="form-group">
                 <label for="csvFile">Cargar CSV con números de teléfono</label>
@@ -71,6 +72,15 @@
             checkModemStatus();
             // Verificar el estado del módem cada 5 segundos
             setInterval(checkModemStatus, 5000);
+
+            // Actualizar el contador de caracteres al escribir
+            const messageInput = document.getElementById('message');
+            const charCount = document.getElementById('charCount');
+
+            messageInput.addEventListener('input', () => {
+                const remaining = 160 - messageInput.value.length;
+                charCount.innerText = `${remaining} caracteres restantes`;
+            });
         });
 
         // Escuchar el evento de envío de formulario
@@ -113,6 +123,7 @@
             document.getElementById('smsForm').reset();
             document.getElementById('smsForm').style.display = 'block';
             document.getElementById('successMessage').style.display = 'none';
+            document.getElementById('charCount').innerText = '160 caracteres restantes'; // Reiniciar contador
         });
 
         // Función para manejar el estado del checkbox
